@@ -44,6 +44,46 @@
     update();
   }
 
+  // Calendly booking: embed the calendar, with a booking button as a fallback.
+  function showCalendar(data) {
+    var parent = document.getElementById('calendly-embed');
+    var q = '?hide_gdpr_banner=1&name=' + encodeURIComponent(data.name || '') + '&email=' + encodeURIComponent(data.email || '');
+    var bookUrl = CALENDLY_URL + q;
+    var fallback = function () {
+      parent.className = '';
+      parent.innerHTML = '';
+      var a = document.createElement('a');
+      a.className = 'btn btn-pink';
+      a.href = bookUrl;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.textContent = 'Choose a time for your call';
+      parent.appendChild(a);
+    };
+    var init = function () {
+      try {
+        window.Calendly.initInlineWidget({
+          url: CALENDLY_URL + '?hide_gdpr_banner=1',
+          parentElement: parent,
+          prefill: { name: data.name, email: data.email }
+        });
+      } catch (e) { fallback(); }
+    };
+    if (window.Calendly) { init(); return; }
+    // Load Calendly's script if it isn't there yet (slow network or blocked earlier).
+    if (!document.querySelector('script[src*="assets.calendly.com"]')) {
+      var s = document.createElement('script');
+      s.src = 'https://assets.calendly.com/assets/external/widget.js';
+      s.async = true;
+      document.head.appendChild(s);
+    }
+    var tries = 0;
+    var wait = setInterval(function () {
+      if (window.Calendly) { clearInterval(wait); init(); }
+      else if (++tries > 80) { clearInterval(wait); fallback(); }   // ~12 seconds
+    }, 150);
+  }
+
   // Lead form -> /api/contact, then show Calendly
   var form = document.getElementById('lead-form');
   if (form) {
@@ -81,23 +121,8 @@
         var booking = document.getElementById('booking');
         booking.hidden = false;
         document.getElementById('booking-heading').focus();
-        var url = CALENDLY_URL + '?hide_gdpr_banner=1';
-        var parent = document.getElementById('calendly-embed');
-        var init = function () {
-          window.Calendly.initInlineWidget({
-            url: url,
-            parentElement: parent,
-            prefill: { name: data.name, email: data.email }
-          });
-        };
-        if (window.Calendly) { init(); }
-        else {
-          var tries = 0;
-          var wait = setInterval(function () {
-            if (window.Calendly) { clearInterval(wait); init(); }
-            else if (++tries > 40) { clearInterval(wait); }
-          }, 150);
-        }
+        booking.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        showCalendar(data);
         if (window.va) { window.va('event', { name: 'Lead submitted' }); }
       }).catch(function (err) {
         showError(err.message + ' Please try again, or call (303) 651-2275.');
