@@ -183,6 +183,18 @@
       });
     });
 
+    // Remember which boxes are checked on this device
+    var boxes = document.querySelectorAll('.cl input[type=checkbox]');
+    var saved = {};
+    try { saved = JSON.parse(localStorage.getItem('urc_checklist_items') || '{}'); } catch (e) {}
+    boxes.forEach(function (b) {
+      if (saved[b.dataset.cl]) b.checked = true;
+      b.addEventListener('change', function () {
+        saved[b.dataset.cl] = b.checked;
+        try { localStorage.setItem('urc_checklist_items', JSON.stringify(saved)); } catch (e) {}
+      });
+    });
+
     var printBtn = document.getElementById('print-checklist');
     if (printBtn) printBtn.addEventListener('click', function () { window.print(); });
   }

@@ -27,7 +27,10 @@ export default async function handler(req, res) {
   body = body || {};
 
   // Spam trap: real visitors never fill this hidden field.
-  if (clean(body.company_website)) return res.status(200).json({ ok: true });
+  if (clean(body.hp_trap)) {
+    console.warn('Spam trap filled; submission dropped', clean(body.email));
+    return res.status(200).json({ ok: true });
+  }
 
   const lead = {
     name: clean(body.name),

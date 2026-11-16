@@ -196,8 +196,10 @@ p { margin: 0; }
 .cl-section { background: var(--gray); border-radius: var(--radius); padding: 28px; break-inside: avoid; }
 .cl-section h3 { font-size: 21px; margin-bottom: 16px; display: flex; gap: 10px; align-items: baseline; }
 .cl { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
-.cl li { position: relative; padding-left: 34px; font-size: 15px; color: var(--ink); }
-.cl li::before { content: ""; position: absolute; left: 0; top: 1px; width: 20px; height: 20px; border: 2px solid var(--pink); border-radius: 4px; background: #fff; }
+.cl li { font-size: 15px; color: var(--ink); }
+.cl label { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; }
+.cl input[type=checkbox] { flex: none; width: 20px; height: 20px; margin: 1px 0 0; accent-color: var(--pink); cursor: pointer; }
+.cl input:checked + span { color: var(--muted); }
 .cl-note { font-size: 13px; color: var(--muted); margin-top: 14px; }
 .cl-cta { margin-top: 40px; background: var(--ink); border-radius: 16px; padding: 36px 40px; display: flex; flex-wrap: wrap; gap: 24px; align-items: center; justify-content: space-between; }
 .cl-cta .stack { flex: 1 1 420px; }
@@ -210,6 +212,7 @@ p { margin: 0; }
   .cl-grid { grid-template-columns: 1fr 1fr; gap: 14px; }
   .cl-section { padding: 16px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .cl li { font-size: 12px; }
+  .cl input[type=checkbox] { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .cl-cta { -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 20px; }
 }
 .checklist-page .checks svg { flex: none; }
