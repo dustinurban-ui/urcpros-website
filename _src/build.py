@@ -9,6 +9,7 @@ footer = idx[idx.index('</main>') + len('</main>'):]
 pages = {
   'services': ('Services | Urban Recruiting &amp; Consulting', 'Recruiting, leadership, HR operations and workforce planning for one predictable monthly fee. No per-hire fees.', '/services', ''),
   'contact': ('Book a Strategy Call | Urban Recruiting &amp; Consulting', 'Book a free 30-minute strategy call with Urban Recruiting & Consulting and find out what is slowing down your hiring.', '/contact', '<link rel="stylesheet" href="https://assets.calendly.com/assets/external/widget.css">\n<script src="https://assets.calendly.com/assets/external/widget.js" async></script>\n'),
+  'checklist': ('Free Frontline Hiring Checklist | Urban Recruiting &amp; Consulting', 'A free 33-step checklist for construction, transportation and manufacturing employers to hire faster, keep new hires, and qualify CDL drivers.', '/checklist', ''),
   'privacy-policy': ('Privacy Policy | Urban Recruiting &amp; Consulting', 'How Urban Recruiting & Consulting collects and uses information through urcpros.com.', '/privacy-policy', ''),
 }
 for name, (title, desc, path, extra) in pages.items():

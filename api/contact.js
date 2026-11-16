@@ -39,7 +39,10 @@ export default async function handler(req, res) {
     industry: clean(body.industry, 80),
     needs: (Array.isArray(body.needs) ? body.needs : []).map((n) => clean(n, 80)).slice(0, 6).join(', '),
     challenge: clean(body.challenge, MAX),
+    source: clean(body.source, 40),
+    utm: ['utm_source', 'utm_medium', 'utm_campaign'].map((k) => clean(body[k], 80)).filter(Boolean).join(' / '),
   };
+  const isChecklist = lead.source === 'checklist';
 
   if (!lead.name || !lead.company || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(lead.email)) {
     return res.status(400).json({ error: 'Please include your name, company and a valid email.' });
@@ -57,14 +60,15 @@ export default async function handler(req, res) {
     ['Name', lead.name], ['Company', lead.company], ['Email', lead.email], ['Phone', lead.phone],
     ['Role', lead.role], ['Employees', lead.employees], ['Industry', lead.industry],
     ['Needs help with', lead.needs], ['Biggest hiring challenge', lead.challenge],
+    ['Came from', lead.utm],
   ].filter(([, v]) => v);
 
   const html = `<div style="font-family:Arial,sans-serif;font-size:15px;color:#222">
-<h2 style="margin:0 0 12px">New strategy call request</h2>
+<h2 style="margin:0 0 12px">${isChecklist ? 'New checklist download' : 'New strategy call request'}</h2>
 <table cellpadding="6" style="border-collapse:collapse">${rows
     .map(([k, v]) => `<tr><td style="font-weight:bold;vertical-align:top;white-space:nowrap">${esc(k)}</td><td style="white-space:pre-wrap">${esc(v)}</td></tr>`)
     .join('')}</table>
-<p style="color:#666;margin-top:16px">Hit Reply to answer ${esc(lead.name)} directly. They were shown your Calendly to book a time.</p></div>`;
+<p style="color:#666;margin-top:16px">Hit Reply to answer ${esc(lead.name)} directly. ${isChecklist ? 'They downloaded the Frontline Hiring Checklist. A follow-up within a day or two works well.' : 'They were shown your Calendly to book a time.'}</p></div>`;
   const text = rows.map(([k, v]) => `${k}: ${v}`).join('\n');
 
   try {
@@ -75,7 +79,7 @@ export default async function handler(req, res) {
         from: `URC Website <${from}>`,
         to: [to],
         reply_to: lead.email,
-        subject: `New strategy call request: ${lead.company} (${lead.name})`,
+        subject: `${isChecklist ? 'New checklist lead' : 'New strategy call request'}: ${lead.company} (${lead.name})`,
         html,
         text,
       }),

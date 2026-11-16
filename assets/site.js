@@ -131,4 +131,59 @@
       });
     });
   }
+
+  // Checklist lead magnet -> /api/contact, then reveal the checklist
+  var clForm = document.getElementById('checklist-form');
+  if (clForm) {
+    var clError = document.getElementById('checklist-error');
+    var clSubmit = document.getElementById('checklist-submit');
+    var checklist = document.getElementById('checklist');
+    var reveal = function () {
+      clForm.hidden = true;
+      document.getElementById('checklist-thanks').hidden = false;
+      checklist.hidden = false;
+      try { localStorage.setItem('urc_checklist', '1'); } catch (e) {}
+    };
+    // Returning visitors who already signed up go straight to the checklist
+    try { if (localStorage.getItem('urc_checklist') === '1') { reveal(); } } catch (e) {}
+
+    clForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      clError.hidden = true;
+      if (!clForm.checkValidity()) {
+        var bad = clForm.querySelector(':invalid');
+        clError.textContent = 'Please fill in your name, company and a valid work email.';
+        clError.hidden = false;
+        if (bad) bad.focus();
+        return;
+      }
+      var data = { source: 'checklist' };
+      new FormData(clForm).forEach(function (v, k) { data[k] = v; });
+      var params = new URLSearchParams(window.location.search);
+      ['utm_source', 'utm_medium', 'utm_campaign'].forEach(function (k) { if (params.get(k)) data[k] = params.get(k); });
+      clSubmit.disabled = true;
+      clSubmit.textContent = 'Sending…';
+      fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (body) {
+          if (!r.ok) throw new Error(body.error || 'Something went wrong.');
+        });
+      }).then(function () {
+        reveal();
+        document.getElementById('checklist-thanks-heading').focus();
+        if (window.va) { window.va('event', { name: 'Checklist lead', data: { source: data.utm_source || 'direct' } }); }
+      }).catch(function (err) {
+        clError.textContent = err.message + ' Please try again, or email connect@urcpros.com.';
+        clError.hidden = false;
+        clSubmit.disabled = false;
+        clSubmit.textContent = 'Send me the checklist';
+      });
+    });
+
+    var printBtn = document.getElementById('print-checklist');
+    if (printBtn) printBtn.addEventListener('click', function () { window.print(); });
+  }
 })();

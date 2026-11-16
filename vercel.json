@@ -3,7 +3,8 @@
   "trailingSlash": false,
   "redirects": [
     { "source": "/consulting", "destination": "/services", "permanent": true },
-    { "source": "/blog", "destination": "/", "permanent": false }
+    { "source": "/blog", "destination": "/", "permanent": false },
+    { "source": "/start", "destination": "/checklist", "permanent": false }
   ],
   "headers": [
     { "source": "/(.*)", "headers": [
