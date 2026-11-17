@@ -4,6 +4,8 @@
   var CALENDLY_URL = 'https://calendly.com/surban26';
   // Route to Hire client login address.
   var PORTAL_URL = 'https://portal.urcpros.com';
+  // Booking link for the 15-minute checklist review. Leave '' to use CALENDLY_URL.
+  var CHECKLIST_REVIEW_URL = '';
 
   // Mobile menu
   var toggle = document.querySelector('.nav-toggle');
@@ -52,6 +54,9 @@
       track('Consultation booked', { audience: leadAudience || 'unknown' });
     }
   });
+
+  // 15-minute checklist review links
+  document.querySelectorAll('[data-review-link]').forEach(function (a) { a.href = CHECKLIST_REVIEW_URL || CALENDLY_URL; });
 
   // Vacancy cost calculator
   var roles = document.getElementById('calc-roles');
@@ -179,8 +184,9 @@
       checklist.hidden = false;
       try { localStorage.setItem('urc_checklist', '1'); } catch (e) {}
     };
-    // Returning visitors who already signed up go straight to the checklist
-    try { if (localStorage.getItem('urc_checklist') === '1') { reveal(); } } catch (e) {}
+    // Returning visitors, or people opening the link from their email, go straight to the checklist
+    var fromEmail = new URLSearchParams(window.location.search).get('access') === '1';
+    try { if (fromEmail || localStorage.getItem('urc_checklist') === '1') { reveal(); } } catch (e) { if (fromEmail) reveal(); }
 
     clForm.addEventListener('submit', function (e) {
       e.preventDefault();
@@ -221,14 +227,41 @@
     // Remember which boxes are checked on this device
     var boxes = document.querySelectorAll('.cl input[type=checkbox]');
     var saved = {};
+    // Score: how many steps are in place, and which section has the most gaps
+    var updateScore = function () {
+      var done = 0, worst = null;
+      document.querySelectorAll('.cl-section').forEach(function (sec) {
+        var all = sec.querySelectorAll('.cl input[type=checkbox]');
+        var open = 0;
+        all.forEach(function (b) { if (b.checked) done++; else open++; });
+        var name = sec.querySelector('h3').textContent.replace(/^\s*\d+\s*/, '');
+        if (/CDL/.test(name) && open === all.length) return; // optional section, skip if untouched
+        var share = open / all.length;
+        if (open && (!worst || share > worst.share)) worst = { name: name, open: open, share: share };
+      });
+      var doneEl = document.getElementById('cl-done');
+      if (!doneEl) return;
+      doneEl.textContent = done;
+      var head = document.getElementById('cl-score-head');
+      var text = document.getElementById('cl-score-text');
+      if (done === 0) { head.textContent = 'Start checking off what you already do.'; text.textContent = 'Your biggest gap will show up here.'; }
+      else if (!worst) { head.textContent = 'Every step is in place.'; text.textContent = 'A strong process. A review can still find where good candidates slip away.'; }
+      else {
+        head.textContent = 'Your biggest gap: ' + worst.name + '.';
+        text.textContent = worst.open + (worst.open === 1 ? ' step' : ' steps') + ' still open there. A free 15-minute review can help you decide what to fix first.';
+      }
+    };
     try { saved = JSON.parse(localStorage.getItem('urc_checklist_items') || '{}'); } catch (e) {}
     boxes.forEach(function (b) {
       if (saved[b.dataset.cl]) b.checked = true;
       b.addEventListener('change', function () {
         saved[b.dataset.cl] = b.checked;
+        updateScore();
         try { localStorage.setItem('urc_checklist_items', JSON.stringify(saved)); } catch (e) {}
       });
     });
+
+    updateScore();
 
     var printBtn = document.getElementById('print-checklist');
     if (printBtn) printBtn.addEventListener('click', function () { window.print(); });

@@ -25,6 +25,11 @@ Vercel environment variables (Project → Settings → Environment Variables):
 | `RESEND_API_KEY` | Your Resend API key |
 | `LEAD_TO_EMAIL` | `connect@urcpros.com` |
 | `FROM_EMAIL` | `website@urcpros.com` (must be on a domain verified in Resend) |
+| `REVIEW_URL` | Optional. Booking link for the 15-minute checklist review (defaults to the main Calendly link) |
+| `FOLLOWUPS_ENABLED` | `true` to schedule the 3 checklist follow-up emails. Leave unset to keep them off |
+| `COMPANY_ADDRESS` | Postal address shown in follow-up emails. Follow-ups never send without it |
+
+Tick **Preview** as well as **Production** for these variables so the form also works on preview links.
 
 ## Launch steps
 

@@ -300,3 +300,19 @@ p { margin: 0; }
 
 .foot-head { color: #fff; font-weight: 700; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 4px; }
 .audience-choice label { font-weight: 600; }
+
+/* Checklist score and "Where URC helps" */
+.cl-score { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; background: var(--ink); color: var(--muted-dark); border-radius: 14px; padding: 14px 22px; box-shadow: 0 10px 30px rgba(0,0,0,.18); margin-bottom: 24px; position: sticky; top: 92px; z-index: 5; }
+.cl-score-num { display: flex; align-items: baseline; gap: 8px; }
+.cl-score-num span { font-family: var(--head); font-weight: 800; font-size: 34px; color: #fff; line-height: 1; }
+.cl-score-num small { font-size: 15px; }
+.cl-score-msg { flex: 1 1 320px; }
+.cl-score-head { color: #fff; font-weight: 700; font-size: 16px; }
+.cl-score-msg p:not(.cl-score-head) { font-size: 14px; }
+.cl-score .btn { min-height: 44px; padding: 10px 18px; font-size: 15px; }
+@media (max-width: 1140px) { .cl-score { top: 84px; } }
+@media (max-width: 600px) { .cl-score { position: static; padding: 20px; } }
+.cl-help { margin-top: 16px; padding-top: 14px; border-top: 1px solid #DCDCE0; font-size: 14px; color: var(--body); }
+.cl-help a { color: var(--pink-text); font-weight: 600; }
+.cl-cta .btn-outline { color: #fff; }
+@media print { .cl-help { font-size: 11px; } }

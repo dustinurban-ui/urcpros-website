@@ -3,6 +3,11 @@
 //   RESEND_API_KEY  – your Resend API key (required)
 //   LEAD_TO_EMAIL   – where leads are delivered (default: connect@urcpros.com)
 //   FROM_EMAIL      – sender address on a domain verified in Resend (default: website@urcpros.com)
+//   REVIEW_URL      – booking link for the 15-minute checklist review (default: main Calendly link)
+//   FOLLOWUPS_ENABLED – "true" to schedule the 3 checklist follow-up emails (off by default)
+//   COMPANY_ADDRESS – postal address shown in follow-up emails; follow-ups never send without it
+
+import { buildEmails } from './_checklist-emails.js';
 
 const MAX = 2000;
 
@@ -72,26 +77,62 @@ export default async function handler(req, res) {
 <table cellpadding="6" style="border-collapse:collapse">${rows
     .map(([k, v]) => `<tr><td style="font-weight:bold;vertical-align:top;white-space:nowrap">${esc(k)}</td><td style="white-space:pre-wrap">${esc(v)}</td></tr>`)
     .join('')}</table>
-<p style="color:#666;margin-top:16px">Hit Reply to answer ${esc(lead.name)} directly. ${isChecklist ? 'They downloaded the Frontline Hiring Checklist. A follow-up within a day or two works well.' : 'They were shown your Calendly to book a time.'}</p></div>`;
+<p style="color:#666;margin-top:16px">Hit Reply to answer ${esc(lead.name)} directly. ${isChecklist ? 'They downloaded the Construction Hiring Checklist.' : 'They were shown your Calendly to book a time.'}</p></div>`;
   const text = rows.map(([k, v]) => `${k}: ${v}`).join('\n');
 
-  try {
+  const send = async (payload) => {
     const r = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: `URC Website <${from}>`,
-        to: [to],
-        reply_to: lead.email,
-        subject: `${isChecklist ? 'New checklist lead' : `New consultation request${lead.orgType ? ' (' + lead.orgType + ')' : ''}`}: ${lead.company} (${lead.name})`,
-        html,
-        text,
-      }),
+      body: JSON.stringify(payload),
     });
-    if (!r.ok) {
-      console.error('Resend error', r.status, await r.text());
-      return res.status(502).json({ error: 'We could not send your request.' });
+    const out = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(`Resend ${r.status}: ${JSON.stringify(out)}`);
+    return out.id;
+  };
+
+  // Checklist downloads: email the lead their checklist, and schedule follow-ups if enabled.
+  const notes = [];
+  if (isChecklist) {
+    const firstName = lead.name.split(/\s+/)[0];
+    const reviewUrl = process.env.REVIEW_URL || 'https://calendly.com/surban26';
+    const address = (process.env.COMPANY_ADDRESS || '').trim();
+    const { delivery, followups } = buildEmails({ firstName, reviewUrl, address });
+    const fromLead = `Dustin Urban, URC <${from}>`;
+    try {
+      await send({ from: fromLead, to: [lead.email], reply_to: to, subject: delivery.subject, html: delivery.html, text: delivery.text });
+      notes.push('Checklist email sent to the lead.');
+    } catch (err) {
+      console.error('Checklist delivery failed', err);
+      notes.push('Checklist email to the lead FAILED. Send them the link: https://www.urcpros.com/checklist?access=1');
     }
+    if (process.env.FOLLOWUPS_ENABLED === 'true' && address) {
+      for (const f of followups) {
+        try {
+          const id = await send({ from: fromLead, to: [lead.email], reply_to: to, subject: f.subject, html: f.html, scheduled_at: f.when });
+          notes.push(`Follow-up "${f.subject}" scheduled ${f.when} (Resend ID ${id}).`);
+        } catch (err) {
+          console.error('Follow-up scheduling failed', err);
+          notes.push(`Follow-up "${f.subject}" could not be scheduled.`);
+        }
+      }
+    } else {
+      notes.push('Automatic follow-ups are off. Follow up personally within a day or two.');
+    }
+  }
+
+  const noteHtml = notes.length ? `<ul style="color:#444">${notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : '';
+  const finalHtml = html.replace('</div>', `${noteHtml}</div>`);
+
+  try {
+    await send({
+      from: `URC Website <${from}>`,
+      to: [to],
+      reply_to: lead.email,
+      subject: `${isChecklist ? 'New checklist lead' : `New consultation request${lead.orgType ? ' (' + lead.orgType + ')' : ''}`}: ${lead.company} (${lead.name})`,
+      html: finalHtml,
+      text: text + (notes.length ? '\n\n' + notes.join('\n') : ''),
+    });
     return res.status(200).json({ ok: true });
   } catch (err) {
     console.error('Send failed', err);
