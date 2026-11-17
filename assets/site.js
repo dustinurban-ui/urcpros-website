@@ -2,7 +2,7 @@
 (function () {
   // ---- Settings you may want to change ----
   var CALENDLY_URL = 'https://calendly.com/surban26';
-  // Route to Hire client login address.
+  // Route to Hire staff login address (footer link).
   var PORTAL_URL = 'https://portal.urcpros.com';
   // Booking link for the 15-minute checklist review. Leave '' to use CALENDLY_URL.
   var CHECKLIST_REVIEW_URL = '';
