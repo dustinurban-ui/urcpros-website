@@ -6,17 +6,17 @@ A static website with one serverless function that emails each strategy-call req
 
 | Path | What it is |
 |---|---|
-| `index.html`, `services.html`, `contact.html`, `privacy-policy.html` | The pages |
+| `*.html`, `school-districts/`, `business/` | The built pages (don't edit these directly) |
 | `assets/` | Styles, logo, favicon, and `site.js` (menu, calculator, form, Calendly) |
 | `api/contact.js` | Sends each form submission to connect@urcpros.com via Resend |
 | `vercel.json` | Clean URLs (`/services`), and redirects from the old site's `/consulting` and `/blog` |
-| `_src/` | Page sources; `python3 _src/build.py .` rebuilds the inner pages after you edit the shared header/footer in `index.html` |
+| `_src/` | Page sources: `*.main.html` for each page, `partials/` for the shared head, header and footer. Run `python3 _src/build.py .` to rebuild every page and `sitemap.xml`. Page titles, descriptions and structured data are set in `_src/build.py`. |
 
 ## Settings
 
 In `assets/site.js`:
 - `CALENDLY_URL`: currently `https://calendly.com/surban26`
-- `PORTAL_URL`: set this to the Route to Hire login address so "Client login" goes there (blank = goes to the contact page)
+- `PORTAL_URL`: the Route to Hire client login (`https://portal.urcpros.com`)
 
 Vercel environment variables (Project → Settings → Environment Variables):
 

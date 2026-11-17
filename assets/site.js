@@ -2,8 +2,8 @@
 (function () {
   // ---- Settings you may want to change ----
   var CALENDLY_URL = 'https://calendly.com/surban26';
-  // Route to Hire login address. Leave '' to send "Client login" to the contact page.
-  var PORTAL_URL = '';
+  // Route to Hire client login address.
+  var PORTAL_URL = 'https://portal.urcpros.com';
 
   // Mobile menu
   var toggle = document.querySelector('.nav-toggle');
@@ -26,6 +26,32 @@
   if (PORTAL_URL) {
     document.querySelectorAll('[data-portal-link]').forEach(function (a) { a.href = PORTAL_URL; });
   }
+
+  // Analytics helper (Vercel Web Analytics custom events; needs the Pro plan to record)
+  function track(name, data) { try { if (window.va) window.va('event', { name: name, data: data || {} }); } catch (e) {} }
+
+  // Track main call-to-action clicks
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('[data-cta]');
+    if (a) track('CTA click', { label: a.getAttribute('data-cta') });
+  });
+
+  // Contact form: audience (district or business) from ?audience= and the radio buttons
+  var leadAudience = '';
+  function setAudience(form, value) {
+    leadAudience = value;
+    var isDistrict = value === 'School district';
+    form.querySelectorAll('[data-business-only]').forEach(function (el) { el.hidden = isDistrict; });
+    form.querySelectorAll('[data-label-district]').forEach(function (el) { el.hidden = !isDistrict; });
+    form.querySelectorAll('[data-label-default]').forEach(function (el) { el.hidden = isDistrict; });
+  }
+
+  // Calendly: record bookings
+  window.addEventListener('message', function (e) {
+    if (e.origin === 'https://calendly.com' && e.data && e.data.event === 'calendly.event_scheduled') {
+      track('Consultation booked', { audience: leadAudience || 'unknown' });
+    }
+  });
 
   // Vacancy cost calculator
   var roles = document.getElementById('calc-roles');
@@ -87,6 +113,15 @@
   // Lead form -> /api/contact, then show Calendly
   var form = document.getElementById('lead-form');
   if (form) {
+    var qs = new URLSearchParams(window.location.search).get('audience');
+    var preset = qs === 'district' ? 'School district' : qs === 'business' ? 'Business' : '';
+    if (preset) {
+      var radio = form.querySelector('input[name=orgType][value="' + preset + '"]');
+      if (radio) { radio.checked = true; setAudience(form, preset); }
+    }
+    form.querySelectorAll('input[name=orgType]').forEach(function (r) {
+      r.addEventListener('change', function () { setAudience(form, r.value); });
+    });
     var errorBox = document.getElementById('form-error');
     var submit = document.getElementById('lead-submit');
     var showError = function (msg) { errorBox.textContent = msg; errorBox.hidden = false; };
@@ -96,7 +131,7 @@
       errorBox.hidden = true;
       if (!form.checkValidity()) {
         var bad = form.querySelector(':invalid');
-        showError('Please fill in your name, company, a valid work email, your role and company size.');
+        showError('Please choose school district or business, and fill in your name, organization, a valid work email and your role.');
         if (bad) bad.focus();
         return;
       }
@@ -123,11 +158,11 @@
         document.getElementById('booking-heading').focus();
         booking.scrollIntoView({ behavior: 'smooth', block: 'start' });
         showCalendar(data);
-        if (window.va) { window.va('event', { name: 'Lead submitted' }); }
+        track('Lead submitted', { audience: data.orgType || 'unknown' });
       }).catch(function (err) {
         showError(err.message + ' Please try again, or call (303) 651-2275.');
         submit.disabled = false;
-        submit.textContent = 'Request my strategy call';
+        submit.textContent = 'Request my consultation';
       });
     });
   }
@@ -174,7 +209,7 @@
       }).then(function () {
         reveal();
         document.getElementById('checklist-thanks-heading').focus();
-        if (window.va) { window.va('event', { name: 'Checklist lead', data: { source: data.utm_source || 'direct' } }); }
+        track('Checklist lead', { source: data.utm_source || 'direct' });
       }).catch(function (err) {
         clError.textContent = err.message + ' Please try again, or email connect@urcpros.com.';
         clError.hidden = false;

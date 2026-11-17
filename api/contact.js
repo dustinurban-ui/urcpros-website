@@ -34,6 +34,7 @@ export default async function handler(req, res) {
 
   const lead = {
     name: clean(body.name),
+    orgType: clean(body.orgType, 40),
     company: clean(body.company),
     email: clean(body.email),
     phone: clean(body.phone, 50),
@@ -60,14 +61,14 @@ export default async function handler(req, res) {
   const from = process.env.FROM_EMAIL || 'website@urcpros.com';
 
   const rows = [
-    ['Name', lead.name], ['Company', lead.company], ['Email', lead.email], ['Phone', lead.phone],
+    ['Reaching out about', lead.orgType], ['Name', lead.name], ['Organization', lead.company], ['Email', lead.email], ['Phone', lead.phone],
     ['Role', lead.role], ['Employees', lead.employees], ['Industry', lead.industry],
     ['Needs help with', lead.needs], ['Biggest hiring challenge', lead.challenge],
     ['Came from', lead.utm],
   ].filter(([, v]) => v);
 
   const html = `<div style="font-family:Arial,sans-serif;font-size:15px;color:#222">
-<h2 style="margin:0 0 12px">${isChecklist ? 'New checklist download' : 'New strategy call request'}</h2>
+<h2 style="margin:0 0 12px">${isChecklist ? 'New checklist download' : 'New consultation request'}</h2>
 <table cellpadding="6" style="border-collapse:collapse">${rows
     .map(([k, v]) => `<tr><td style="font-weight:bold;vertical-align:top;white-space:nowrap">${esc(k)}</td><td style="white-space:pre-wrap">${esc(v)}</td></tr>`)
     .join('')}</table>
@@ -82,7 +83,7 @@ export default async function handler(req, res) {
         from: `URC Website <${from}>`,
         to: [to],
         reply_to: lead.email,
-        subject: `${isChecklist ? 'New checklist lead' : 'New strategy call request'}: ${lead.company} (${lead.name})`,
+        subject: `${isChecklist ? 'New checklist lead' : `New consultation request${lead.orgType ? ' (' + lead.orgType + ')' : ''}`}: ${lead.company} (${lead.name})`,
         html,
         text,
       }),
