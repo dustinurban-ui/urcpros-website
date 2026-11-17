@@ -70,7 +70,7 @@ PAGES = [
      'resources.main.html', [('Resources', '/resources')], None, ''),
     ('contact.html', '/contact', '/contact', 'Schedule a Consultation | Urban Recruiting & Consulting',
      'Schedule a consultation with Urban Recruiting & Consulting about school district staffing or your business recruiting and HR needs.',
-     'contact.main.html', [('Contact', '/contact')], None, CAL_HEAD),
+     'contact.main.html', [('Contact', '/contact')], None, '<link rel="preconnect" href="https://calendly.com">\n'),
     ('checklist.html', '/checklist', '/resources', 'Free Construction Hiring Checklist | Urban Recruiting & Consulting',
      'A free 33-step hiring checklist with a score for roofing and construction companies: fill field, project and office roles faster and keep new hires past day 90.',
      'checklist.main.html', [('Resources', '/resources'), ('Construction Hiring Checklist', '/checklist')], None, ''),

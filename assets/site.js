@@ -75,44 +75,26 @@
     update();
   }
 
-  // Calendly booking: embed the calendar, with a booking button as a fallback.
+  // Calendly booking: load the calendar directly in an iframe on this page.
+  // (No dependency on Calendly's widget script, so it appears as soon as the form is sent.)
   function showCalendar(data) {
     var parent = document.getElementById('calendly-embed');
-    var q = '?hide_gdpr_banner=1&name=' + encodeURIComponent(data.name || '') + '&email=' + encodeURIComponent(data.email || '');
-    var bookUrl = CALENDLY_URL + q;
-    var fallback = function () {
-      parent.className = '';
-      parent.innerHTML = '';
-      var a = document.createElement('a');
-      a.className = 'btn btn-pink';
-      a.href = bookUrl;
-      a.target = '_blank';
-      a.rel = 'noopener';
-      a.textContent = 'Choose a time for your call';
-      parent.appendChild(a);
-    };
-    var init = function () {
-      try {
-        window.Calendly.initInlineWidget({
-          url: CALENDLY_URL + '?hide_gdpr_banner=1',
-          parentElement: parent,
-          prefill: { name: data.name, email: data.email }
-        });
-      } catch (e) { fallback(); }
-    };
-    if (window.Calendly) { init(); return; }
-    // Load Calendly's script if it isn't there yet (slow network or blocked earlier).
-    if (!document.querySelector('script[src*="assets.calendly.com"]')) {
-      var s = document.createElement('script');
-      s.src = 'https://assets.calendly.com/assets/external/widget.js';
-      s.async = true;
-      document.head.appendChild(s);
-    }
-    var tries = 0;
-    var wait = setInterval(function () {
-      if (window.Calendly) { clearInterval(wait); init(); }
-      else if (++tries > 80) { clearInterval(wait); fallback(); }   // ~12 seconds
-    }, 150);
+    var q = new URLSearchParams({
+      embed_domain: window.location.hostname,
+      embed_type: 'Inline',
+      hide_gdpr_banner: '1',
+      name: data.name || '',
+      email: data.email || ''
+    });
+    var frame = document.createElement('iframe');
+    frame.src = CALENDLY_URL + '?' + q.toString();
+    frame.title = 'Choose a time for your consultation';
+    frame.setAttribute('frameborder', '0');
+    frame.style.width = '100%';
+    frame.style.height = '100%';
+    frame.style.border = '0';
+    parent.innerHTML = '';
+    parent.appendChild(frame);
   }
 
   // Lead form -> /api/contact, then show Calendly
@@ -148,26 +130,29 @@
       submit.disabled = true;
       submit.textContent = 'Sending…';
 
+      // Show the calendar right away; send the details in the background.
+      form.hidden = true;
+      var booking = document.getElementById('booking');
+      booking.hidden = false;
+      document.getElementById('booking-heading').focus();
+      booking.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      showCalendar(data);
+
       fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
+        keepalive: true
       }).then(function (r) {
         return r.json().catch(function () { return {}; }).then(function (body) {
           if (!r.ok) throw new Error(body.error || 'Something went wrong.');
         });
       }).then(function () {
-        form.hidden = true;
-        var booking = document.getElementById('booking');
-        booking.hidden = false;
-        document.getElementById('booking-heading').focus();
-        booking.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        showCalendar(data);
         track('Lead submitted', { audience: data.orgType || 'unknown' });
-      }).catch(function (err) {
-        showError(err.message + ' Please try again, or call (303) 651-2275.');
-        submit.disabled = false;
-        submit.textContent = 'Request my consultation';
+      }).catch(function () {
+        var note = document.getElementById('booking-error');
+        if (note) note.hidden = false;
+        track('Lead send failed', { audience: data.orgType || 'unknown' });
       });
     });
   }

@@ -174,7 +174,8 @@ p { margin: 0; }
 .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 .form-note { font-size: 13px; color: var(--muted); }
 .form-error { background: #FDECF2; color: #8A0A35; border-radius: 8px; padding: 12px 14px; font-size: 15px; }
-.calendly-inline-widget { min-width: 300px; height: 700px; }
+.calendly-inline-widget { min-width: 300px; height: 720px; }
+@media (max-width: 600px) { .calendly-inline-widget { height: 1000px; } }
 .direct-box { background: #fff; border-radius: var(--radius); padding: 24px; display: flex; flex-direction: column; gap: 6px; }
 .direct-box .phone { font-family: var(--head); font-weight: 800; font-size: 26px; color: var(--ink); text-decoration: none; }
 [hidden] { display: none !important; }
